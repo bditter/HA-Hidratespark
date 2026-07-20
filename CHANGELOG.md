@@ -1,5 +1,13 @@
 # Changelog
 
+## What's new in v1.2.2
+
+### Added
+- Read the standard BLE serial number characteristic when available, expose it
+  as a regular sensor, and use it as the Home Assistant device display name.
+- Added a **Reset totals** button to clear accumulated water, sip, refill, and
+  lifetime totals without clearing calibration or current fill.
+
 ## What's new in v1.2.1
 
 ### Fixed

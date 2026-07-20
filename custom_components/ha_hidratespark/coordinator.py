@@ -22,6 +22,7 @@ from .ble import BottleClient
 from .const import (
     CONF_ADDRESS,
     CONF_BOTTLE_NAME,
+    CONF_SERIAL_NUMBER,
     DEFAULT_NAME_PREFIX,
     DOMAIN,
     SERVICE_REF,
@@ -44,6 +45,7 @@ class HidrateSparkCoordinator:
         address: str,
         bottle_name: str,
         name: str,
+        serial_number: str | None,
         size_ml: int,
     ) -> None:
         self.hass = hass
@@ -52,6 +54,7 @@ class HidrateSparkCoordinator:
         self.bottle_name = bottle_name
         self.bottle_id = normalize_bottle_name(bottle_name) or self.address
         self.name = name
+        self.serial_number = serial_number
         self.state = BottleState(hass, entry.entry_id, size_ml)
 
         self._client: Optional[BottleClient] = None
@@ -73,6 +76,11 @@ class HidrateSparkCoordinator:
     def connected(self) -> bool:
         return self._connected
 
+    @property
+    def device_name(self) -> str:
+        """Return the Home Assistant device display name."""
+        return self.serial_number or self.name or "HidrateSpark"
+
     # ---------------------------------------------------------------- lifecycle
 
     async def async_start(self) -> None:
@@ -85,6 +93,7 @@ class HidrateSparkCoordinator:
             size_ml=self.state.bottle_size_ml,
             on_sip=self._handle_sip,
             on_battery=self._handle_battery,
+            on_serial=self._handle_serial,
             on_status=self._handle_status,
             on_refill=self._handle_refill,
             on_weight=self._handle_weight,
@@ -136,6 +145,12 @@ class HidrateSparkCoordinator:
         await self.state.async_save()
         self._notify()
         return True
+
+    async def async_reset_totals(self) -> None:
+        """Clear accumulated water, sip, and refill totals."""
+        self.state.reset_totals()
+        await self.state.async_save()
+        self._notify()
 
     # ------------------------------------------------------- BLE device lookup
 
@@ -232,6 +247,15 @@ class HidrateSparkCoordinator:
         if pct == self._battery_pct:
             return
         self._battery_pct = pct
+        self._notify()
+
+    async def _handle_serial(self, serial_number: str) -> None:
+        if serial_number == self.serial_number:
+            return
+        self.serial_number = serial_number
+        data = dict(self.entry.data)
+        data[CONF_SERIAL_NUMBER] = serial_number
+        self.hass.config_entries.async_update_entry(self.entry, data=data)
         self._notify()
 
     async def _handle_status(self, connected: bool, error: Optional[str]) -> None:

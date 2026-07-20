@@ -24,6 +24,11 @@ BUTTONS: tuple[ButtonEntityDescription, ...] = (
         translation_key="calibrate_empty",
         entity_category=EntityCategory.CONFIG,
     ),
+    ButtonEntityDescription(
+        key="reset_totals",
+        translation_key="reset_totals",
+        entity_category=EntityCategory.CONFIG,
+    ),
 )
 
 
@@ -55,9 +60,14 @@ class HidrateSparkButton(HidrateSparkEntity, ButtonEntity):
             return
         if self.entity_description.key == "calibrate_empty":
             await self._coordinator.async_calibrate_empty()
+            return
+        if self.entity_description.key == "reset_totals":
+            await self._coordinator.async_reset_totals()
 
     @property
     def available(self) -> bool:
+        if self.entity_description.key == "reset_totals":
+            return True
         return (
             self._coordinator.connected
             and self._coordinator.state.weight_raw is not None

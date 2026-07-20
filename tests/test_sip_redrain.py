@@ -93,6 +93,7 @@ def make_client():
         size_ml=946,
         on_sip=AsyncMock(),
         on_battery=AsyncMock(),
+        on_serial=AsyncMock(),
         on_status=AsyncMock(),
         on_refill=AsyncMock(),
         on_weight=AsyncMock(),

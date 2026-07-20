@@ -5,6 +5,7 @@ import unittest
 from ha_stub import HomeAssistant, load_state
 
 state = load_state()
+Sip = state.Sip
 
 
 def new_bottle(size=946):
@@ -105,6 +106,26 @@ class WeightCalibrationTest(unittest.TestCase):
         b.update_fill_from_weight(33550)
 
         self.assertEqual(b.refills_today, 0)
+
+    def test_reset_totals_keeps_fill_and_calibration(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(34656)
+        b.calibrate_full()
+        b.update_fill_from_weight(33500)
+        b.calibrate_empty()
+        b.add_sip(Sip(timestamp=0, volume_ml=100))
+        b.update_fill_from_weight(34656)
+
+        b.reset_totals()
+
+        self.assertEqual(b.total_today_ml, 0)
+        self.assertEqual(b.lifetime_total_ml, 0)
+        self.assertEqual(b.sips_today, 0)
+        self.assertEqual(b.refills_today, 0)
+        self.assertIsNone(b.last_sip)
+        self.assertEqual(b.current_fill_ml, 887)
+        self.assertEqual(b.weight_full_raw, 34656)
+        self.assertEqual(b.weight_empty_raw, 33500)
 
 
 if __name__ == "__main__":

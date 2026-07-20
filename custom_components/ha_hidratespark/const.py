@@ -9,6 +9,7 @@ DOMAIN: Final = "ha_hidratespark"
 # Configuration keys
 CONF_ADDRESS: Final = "address"
 CONF_BOTTLE_NAME: Final = "bottle_name"
+CONF_SERIAL_NUMBER: Final = "serial_number"
 CONF_SIZE_ML: Final = "size_ml"
 CONF_NAME_PREFIX: Final = "name_prefix"
 
@@ -37,6 +38,8 @@ CHAR_DATA_POINT: Final = "016e11b1-6c8a-4074-9e5a-076053f93784"
 
 # BLE: standard battery
 CHAR_BATTERY_LEVEL: Final = "00002a19-0000-1000-8000-00805f9b34fb"
+# BLE: standard Device Information serial number
+CHAR_SERIAL_NUMBER: Final = "00002a25-0000-1000-8000-00805f9b34fb"
 
 # BLE: discovered on firmware 80.18 (nRF52832)
 CHAR_WEIGHT: Final = "1807a063-4e2d-4636-981a-35e93d1c7b94"

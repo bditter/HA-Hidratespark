@@ -210,6 +210,18 @@ class BottleState:
         _LOGGER.info("weight calibration: empty anchor set to %s", self.weight_raw)
         return True
 
+    def reset_totals(self) -> None:
+        """Clear accumulated totals without touching calibration or fill state."""
+        self._maybe_rollover()
+        self.lifetime_total_ml = 0
+        self.last_seen = None
+        self.last_sip = None
+        self.sips.clear()
+        self._total_today_ml = 0
+        self._sips_today = 0
+        self._refills_today = 0
+        _LOGGER.info("totals reset")
+
     @property
     def raw_units_per_ml(self) -> float:
         """Return the active raw-units-per-mL scale for fill calculations."""

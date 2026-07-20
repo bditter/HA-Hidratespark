@@ -12,6 +12,7 @@ from .const import (
     CONF_ADDRESS,
     CONF_BOTTLE_NAME,
     CONF_NAME_PREFIX,
+    CONF_SERIAL_NUMBER,
     CONF_SIZE_ML,
     DEFAULT_NAME_PREFIX,
     DEFAULT_SIZE_ML,
@@ -33,6 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     address: str = entry.data[CONF_ADDRESS]
     bottle_name: str = entry.data.get(CONF_BOTTLE_NAME) or entry.title
     name: str = bottle_name or entry.data.get(CONF_NAME_PREFIX, DEFAULT_NAME_PREFIX)
+    serial_number: str | None = entry.data.get(CONF_SERIAL_NUMBER)
     size_ml: int = entry.options.get(
         CONF_SIZE_ML, entry.data.get(CONF_SIZE_ML, DEFAULT_SIZE_ML)
     )
@@ -43,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         address=address,
         bottle_name=bottle_name,
         name=name,
+        serial_number=serial_number,
         size_ml=size_ml,
     )
     await coordinator.async_start()

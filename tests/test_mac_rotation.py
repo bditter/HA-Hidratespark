@@ -140,7 +140,7 @@ class MacRotationTest(unittest.TestCase):
         coordinator = _load_modules()
         const = sys.modules["hsp.const"]
         c = coordinator.HidrateSparkCoordinator(
-            Hass(), Entry(), "AA:AA:AA:AA:AA:AA", "h2oBottle", "h2oBottle", 591
+            Hass(), Entry(), "AA:AA:AA:AA:AA:AA", "h2oBottle", "h2oBottle", None, 591
         )
 
         self.assertTrue(
@@ -164,7 +164,7 @@ class MacRotationTest(unittest.TestCase):
         hass = Hass()
         entry = Entry()
         c = coordinator.HidrateSparkCoordinator(
-            hass, entry, "AA:AA:AA:AA:AA:AA", "h2oBottle", "h2oBottle", 591
+            hass, entry, "AA:AA:AA:AA:AA:AA", "h2oBottle", "h2oBottle", None, 591
         )
         client = types.SimpleNamespace(address=c.address, force_syncs=0)
 

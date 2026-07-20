@@ -1,7 +1,7 @@
 # HA Hidratespark — Home Assistant integration
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](https://github.com/hacs/integration)
-[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases/tag/v1.2.1)
+[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases/tag/v1.2.2)
 [![License](https://img.shields.io/github/license/bditter/HA-Hidratespark?style=flat-square)](LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/commits)
 [![Stars](https://img.shields.io/github/stars/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/stargazers)
@@ -100,10 +100,12 @@ the app disconnects. Recommended setups:
 | Current fill percent | sensor (%) |
 | Last sip volume | sensor (mL) |
 | Last sip time | sensor (timestamp) |
+| Serial number | sensor |
 | Bottle weight (raw) | diagnostic, disabled by default |
 | Connected | binary_sensor (connectivity) |
 | Calibrate full | button |
 | Calibrate empty | button |
+| Reset totals | button |
 
 ## What survives a disconnect
 

@@ -26,6 +26,7 @@ from .const import (
     CHAR_CAP,
     CHAR_DATA_POINT,
     CHAR_DEBUG,
+    CHAR_SERIAL_NUMBER,
     CHAR_SET_POINT,
     CHAR_USER_DATA,
     CHAR_WEIGHT,
@@ -48,6 +49,7 @@ SipCallback = Callable[[float, int, int], Awaitable[None]]
 """await on_sip(timestamp_unix_s, volume_ml, total_reported_ml)."""
 
 BatteryCallback = Callable[[int], Awaitable[None]]
+SerialCallback = Callable[[str], Awaitable[None]]
 StatusCallback = Callable[[bool, Optional[str]], Awaitable[None]]
 RefillCallback = Callable[[str, Optional[int]], Awaitable[None]]
 """await on_refill(source, weight_full_raw_anchor)."""
@@ -67,6 +69,7 @@ class BottleClient:
         size_ml: int,
         on_sip: SipCallback,
         on_battery: BatteryCallback,
+        on_serial: SerialCallback,
         on_status: StatusCallback,
         on_refill: RefillCallback,
         on_weight: WeightCallback,
@@ -78,6 +81,7 @@ class BottleClient:
         self.size_ml = max(1, int(size_ml))
         self._on_sip = on_sip
         self._on_battery = on_battery
+        self._on_serial = on_serial
         self._on_status = on_status
         self._on_refill = on_refill
         self._on_weight = on_weight
@@ -231,6 +235,15 @@ class BottleClient:
                 _LOGGER.debug("battery notify unavailable: %s", err)
         except Exception as err:  # noqa: BLE001
             _LOGGER.warning("battery read failed: %s", err)
+
+        try:
+            data = await client.read_gatt_char(CHAR_SERIAL_NUMBER)
+            serial = bytes(data).decode("utf-8", errors="ignore").strip("\x00 \r\n\t")
+            if serial:
+                _LOGGER.debug("serial number: %s", serial)
+                await self._on_serial(serial)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.debug("serial number read unavailable: %s", err)
 
         # Try modern handshake + USER_DATA notifications. Fall back to legacy.
         modern_ok = False
