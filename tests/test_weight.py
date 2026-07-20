@@ -84,6 +84,28 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertFalse(b.calibrate_full())
         self.assertFalse(b.calibrate_empty())
 
+    def test_weight_jump_back_to_full_counts_refill(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(34656)
+        b.calibrate_full()
+        b.update_fill_from_weight(33500)
+        b.calibrate_empty()
+
+        b.update_fill_from_weight(34656)
+
+        self.assertEqual(b.current_fill_ml, 887)
+        self.assertEqual(b.refills_today, 1)
+
+    def test_small_weight_increase_does_not_count_refill(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(34656)
+        b.calibrate_full()
+        b.update_fill_from_weight(33500)
+        b.calibrate_empty()
+        b.update_fill_from_weight(33550)
+
+        self.assertEqual(b.refills_today, 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

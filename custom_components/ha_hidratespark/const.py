@@ -69,6 +69,9 @@ RAW_UNITS_PER_ML: Final = 1.305
 # A jump of this many u16 units across a cap open/close means the bottle was
 # refilled (~30 mL at the scale above) rather than just opened to drink.
 REFILL_MIN_DELTA_RAW: Final = 60
+WEIGHT_REFILL_LOW_PCT: Final = 80
+WEIGHT_REFILL_FULL_PCT: Final = 95
+WEIGHT_REFILL_MIN_INCREASE_ML: Final = 150
 
 # 13-step handshake from HydroSync. Each tuple is (target_char, hex_payload).
 # Writes are 50 ms apart.

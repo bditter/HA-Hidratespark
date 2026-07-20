@@ -1,5 +1,12 @@
 # Changelog
 
+## What's new in v1.2.1
+
+### Fixed
+- Refills can now be inferred from stable weight increases after explicit
+  full/empty calibration, so travel mugs without cap events can still update
+  `refills_today` when they go from significantly lower fill back toward full.
+
 ## What's new in v1.2.0
 
 ### Added

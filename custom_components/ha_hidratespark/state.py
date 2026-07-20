@@ -25,6 +25,9 @@ from .const import (
     SIP_DEDUP_WINDOW,
     STORAGE_KEY_PREFIX,
     STORAGE_VERSION,
+    WEIGHT_REFILL_FULL_PCT,
+    WEIGHT_REFILL_LOW_PCT,
+    WEIGHT_REFILL_MIN_INCREASE_ML,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -220,6 +223,51 @@ class BottleState:
             return (self.weight_full_raw - self.weight_empty_raw) / self.bottle_size_ml
         return RAW_UNITS_PER_ML
 
+    @property
+    def has_explicit_weight_calibration(self) -> bool:
+        """Return True when user-provided full and empty anchors are available."""
+        return (
+            self.weight_full_raw is not None
+            and self.weight_empty_raw is not None
+            and self.weight_full_calibrated
+            and self.weight_empty_calibrated
+            and self.weight_full_raw > self.weight_empty_raw
+        )
+
+    def _maybe_count_weight_refill(self, previous_fill_ml: int, new_fill_ml: int) -> None:
+        """Count a refill inferred from a stable upward weight jump."""
+        if not self.has_explicit_weight_calibration:
+            return
+
+        increase_ml = new_fill_ml - previous_fill_ml
+        min_increase_ml = max(
+            WEIGHT_REFILL_MIN_INCREASE_ML,
+            round(self.bottle_size_ml * 0.20),
+        )
+        if increase_ml < min_increase_ml:
+            return
+
+        previous_pct = round(100 * previous_fill_ml / self.bottle_size_ml)
+        new_pct = round(100 * new_fill_ml / self.bottle_size_ml)
+        returned_near_full = (
+            previous_pct <= WEIGHT_REFILL_LOW_PCT
+            and new_pct >= WEIGHT_REFILL_FULL_PCT
+        )
+        large_refill = increase_ml >= min_increase_ml
+        if not (returned_near_full or large_refill):
+            return
+
+        self._maybe_rollover()
+        self._refills_today += 1
+        self.last_refill_ts = time.time()
+        _LOGGER.info(
+            "REFILL (weight): %dml -> %dml (+%dml), refills_today=%d",
+            previous_fill_ml,
+            new_fill_ml,
+            increase_ml,
+            self._refills_today,
+        )
+
     def update_fill_from_weight(self, raw: int) -> bool:
         """Recompute current fill from a stable upright 16-bit weight reading.
 
@@ -232,6 +280,7 @@ class BottleState:
         sensibly. Returns True if current_fill_ml changed.
         """
         self.weight_raw = raw
+        previous_fill_ml = self.current_fill_ml
         if self.weight_full_raw is None:
             # Bootstrap: the first settled reading establishes the full-weight
             # anchor (bottle assumed full at calibration). A real refill
@@ -268,6 +317,7 @@ class BottleState:
                 (self.weight_full_raw - raw) / raw_units_per_ml
             )
         new_fill = max(0, min(self.bottle_size_ml, new_fill))
+        self._maybe_count_weight_refill(previous_fill_ml, new_fill)
         if new_fill != self.current_fill_ml:
             self.current_fill_ml = new_fill
             return True
