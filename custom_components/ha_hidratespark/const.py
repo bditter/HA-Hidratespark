@@ -17,7 +17,7 @@ DEFAULT_NAME_PREFIX: Final = "h2o"
 
 # Reconnect tuning
 RECONNECT_BACKOFF_INITIAL: Final = 1.0
-RECONNECT_BACKOFF_MAX: Final = 60.0
+RECONNECT_BACKOFF_MAX: Final = 15.0
 
 # Refill detection tuning
 REFILL_SETTLE_TIMEOUT_S: Final = 30.0

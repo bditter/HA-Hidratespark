@@ -33,6 +33,8 @@ from .const import (
     HANDSHAKE_COMMANDS,
     HANDSHAKE_INTERVAL_S,
     MAX_IDENTICAL_SIP_FRAMES,
+    RECONNECT_BACKOFF_INITIAL,
+    RECONNECT_BACKOFF_MAX,
     REFILL_MIN_DELTA_RAW,
     REFILL_SETTLE_TIMEOUT_S,
     REFILL_STABLE_SAMPLES,
@@ -134,13 +136,18 @@ class BottleClient:
 
     async def run(self) -> None:
         """Hold a persistent connection, reconnecting with exponential backoff."""
-        backoff = 1.0
+        backoff = RECONNECT_BACKOFF_INITIAL
         while not self._stop.is_set():
             device = self._ble_device_provider()
             if device is None:
                 await self._on_status(False, "device not in range")
+                _LOGGER.debug(
+                    "device not in range for %s; retrying in %.1fs",
+                    self.address,
+                    backoff,
+                )
                 await self._sleep_or_wake(backoff)
-                backoff = min(backoff * 2, 60.0)
+                backoff = min(backoff * 2, RECONNECT_BACKOFF_MAX)
                 continue
 
             try:
@@ -156,12 +163,12 @@ class BottleClient:
                 _LOGGER.warning("connect to %s failed: %s", self.address, err)
                 await self._on_status(False, str(err))
                 await self._sleep_or_wake(backoff)
-                backoff = min(backoff * 2, 60.0)
+                backoff = min(backoff * 2, RECONNECT_BACKOFF_MAX)
                 continue
 
             self._client = client
             self._connected = True
-            backoff = 1.0
+            backoff = RECONNECT_BACKOFF_INITIAL
             _LOGGER.info("connected to %s", self.address)
             await self._on_status(True, None)
 

@@ -49,6 +49,10 @@
     },
     "binary_sensor": {
       "connected": { "name": "Connected" }
+    },
+    "button": {
+      "calibrate_full": { "name": "Calibrate full" },
+      "calibrate_empty": { "name": "Calibrate empty" }
     }
   }
 }

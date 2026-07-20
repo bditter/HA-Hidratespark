@@ -65,6 +65,25 @@ class WeightCalibrationTest(unittest.TestCase):
         b.refill("cap_close", 37100)
         self.assertEqual(b.refills_today, 1, "a real refill increments the counter")
 
+    def test_explicit_full_empty_calibration_sets_per_bottle_scale(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(34656)
+        self.assertTrue(b.calibrate_full())
+        b.update_fill_from_weight(33500)
+        self.assertTrue(b.calibrate_empty())
+
+        self.assertEqual(b.weight_full_raw, 34656)
+        self.assertEqual(b.weight_empty_raw, 33500)
+        self.assertAlmostEqual(b.raw_units_per_ml, (34656 - 33500) / 887)
+
+        b.update_fill_from_weight(33500 + (34656 - 33500) // 2)
+        self.assertAlmostEqual(b.current_fill_ml, 887 / 2, delta=2)
+
+    def test_calibration_buttons_need_a_stable_raw_weight(self):
+        b = new_bottle(887)
+        self.assertFalse(b.calibrate_full())
+        self.assertFalse(b.calibrate_empty())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

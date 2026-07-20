@@ -121,13 +121,37 @@ class HidrateSparkCoordinator:
         if self._client is not None:
             self._client.request_force_sync()
 
+    async def async_calibrate_full(self) -> bool:
+        """Set the full-bottle calibration from the latest stable raw weight."""
+        if not self.state.calibrate_full():
+            return False
+        await self.state.async_save()
+        self._notify()
+        return True
+
+    async def async_calibrate_empty(self) -> bool:
+        """Set the empty-bottle calibration from the latest stable raw weight."""
+        if not self.state.calibrate_empty():
+            return False
+        await self.state.async_save()
+        self._notify()
+        return True
+
     # ------------------------------------------------------- BLE device lookup
 
     def _get_ble_device(self):
         """Return the most current BLEDevice (proxy or local) for the bottle."""
-        return bluetooth.async_ble_device_from_address(
+        self._refresh_address_from_discovery()
+        device = bluetooth.async_ble_device_from_address(
             self.hass, self.address, connectable=True
         )
+        if device is None:
+            _LOGGER.debug(
+                "no BLE device available for %s at %s",
+                self.bottle_name,
+                self.address,
+            )
+        return device
 
     def _refresh_address_from_discovery(self) -> None:
         """Adopt the latest advertised MAC for this bottle name, if HA has one."""
@@ -186,6 +210,11 @@ class HidrateSparkCoordinator:
         # its next iteration. We don't drive connect/disconnect from here.
         if not self._advertisement_matches_bottle(service_info):
             return
+        _LOGGER.debug(
+            "matched advertisement for %s at %s",
+            self.bottle_name,
+            service_info.address,
+        )
         address_changed = self._set_current_address(service_info.address)
         if self._client is not None and not self._connected and not address_changed:
             self._client.request_force_sync()

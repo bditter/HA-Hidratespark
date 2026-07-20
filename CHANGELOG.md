@@ -1,5 +1,20 @@
 # Changelog
 
+## What's new in v1.2.0
+
+### Added
+- Added **Calibrate full** and **Calibrate empty** buttons. Fill the bottle and
+  press Calibrate full, then empty it and press Calibrate empty to set a
+  per-bottle raw-weight scale.
+
+### Fixed
+- When both calibration anchors are available, current fill is calculated from
+  the bottle's own full/empty raw span instead of the previous hardcoded
+  raw-units-per-mL estimate.
+- Reconnect recovery now refreshes the latest advertised MAC before each BLE
+  lookup and caps retry backoff at 15 seconds if an advertisement wakeup is
+  missed.
+
 ## What's new in v1.1.0
 
 ### Fixed

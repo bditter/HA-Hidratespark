@@ -1,7 +1,7 @@
 # HA Hidratespark — Home Assistant integration
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](https://github.com/hacs/integration)
-[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases/tag/v1.1.0)
+[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases/tag/v1.2.0)
 [![License](https://img.shields.io/github/license/bditter/HA-Hidratespark?style=flat-square)](LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/commits)
 [![Stars](https://img.shields.io/github/stars/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/stargazers)
@@ -36,7 +36,8 @@ works with a directly-attached USB or onboard adapter.
 - 💧 Per-sip events with timestamps and dedup (within ±2 s / same volume)
 - 📊 Daily total (rolls at local midnight) and lifetime total
 - 🚰 Auto-refill detection (cap-open/close + weight delta ≥ 25 mL)
-- ⚖️ Live fill level from the on-bottle weight sensor (auto-calibrated)
+- ⚖️ Live fill level from the on-bottle weight sensor
+- 🎯 Full/empty calibration buttons for per-bottle fill scaling
 - 🛟 Sip-exceeds-fill fallback when no weight anchor exists yet
 - 🔁 State persists across HA restarts via the Store API
 - 📥 Buffered sips replay on reconnect with their original timestamps
@@ -72,7 +73,7 @@ folder, restart HA, then add the integration from **Devices & Services**.
 If your bottle is already advertising in range of HA (or a proxy), it appears
 as a Bluetooth discovery and you only need to confirm the capacity. Otherwise
 **+ Add Integration → HA Hidratespark** lets you pick the bottle from a list of
-discovered devices, or type its MAC address directly.
+discovered devices, or type its advertised name and current Bluetooth address.
 
 You can change the bottle's capacity later via the integration's **Configure**
 button.
@@ -101,6 +102,8 @@ the app disconnects. Recommended setups:
 | Last sip time | sensor (timestamp) |
 | Bottle weight (raw) | diagnostic, disabled by default |
 | Connected | binary_sensor (connectivity) |
+| Calibrate full | button |
+| Calibrate empty | button |
 
 ## What survives a disconnect
 
