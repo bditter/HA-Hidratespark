@@ -1,0 +1,41 @@
+"""Buffered sips replayed on reconnect carry old timestamps and must not roll
+'today' backwards (zeroing the daily counters) or move 'last sip' backwards."""
+
+import datetime as _dt
+import unittest
+
+from ha_stub import TZ, HomeAssistant, load_state, local_ts, set_now
+
+state = load_state()
+Sip = state.Sip
+
+
+def new_bottle(size=946):
+    return state.BottleState(HomeAssistant(), "entry", size)
+
+
+class DayRolloverReplayTest(unittest.TestCase):
+    def setUp(self):
+        set_now(_dt.datetime(2026, 6, 18, 20, 0, tzinfo=TZ))  # evening
+
+    def test_replayed_yesterday_sip_does_not_zero_today(self):
+        b = new_bottle()
+        b.add_sip(Sip(timestamp=local_ts(2026, 6, 18, 19, 0), volume_ml=100))  # live, today
+        self.assertEqual(b.total_today_ml, 100)
+
+        # A buffered sip from YESTERDAY is replayed on reconnect.
+        b.add_sip(Sip(timestamp=local_ts(2026, 6, 17, 23, 0), volume_ml=80))
+        self.assertEqual(b.total_today_ml, 100, "replayed old sip must not zero/alter today")
+        self.assertEqual(b.sips_today, 1)
+        self.assertEqual(b.lifetime_total_ml, 180, "old sip still adds to lifetime")
+
+    def test_last_sip_only_advances_forward(self):
+        b = new_bottle()
+        live_ts = local_ts(2026, 6, 18, 19, 0)
+        b.add_sip(Sip(timestamp=live_ts, volume_ml=100))
+        b.add_sip(Sip(timestamp=local_ts(2026, 6, 18, 10, 0), volume_ml=90))  # older replay
+        self.assertEqual(b.last_sip.timestamp, live_ts, "last sip must not jump backwards")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
