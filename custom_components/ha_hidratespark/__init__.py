@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     CONF_ADDRESS,
+    CONF_BOTTLE_NAME,
     CONF_NAME_PREFIX,
     CONF_SIZE_ML,
     DEFAULT_NAME_PREFIX,
@@ -26,7 +27,8 @@ PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HidrateSpark from a config entry."""
     address: str = entry.data[CONF_ADDRESS]
-    name: str = entry.title or entry.data.get(CONF_NAME_PREFIX, DEFAULT_NAME_PREFIX)
+    bottle_name: str = entry.data.get(CONF_BOTTLE_NAME) or entry.title
+    name: str = bottle_name or entry.data.get(CONF_NAME_PREFIX, DEFAULT_NAME_PREFIX)
     size_ml: int = entry.options.get(
         CONF_SIZE_ML, entry.data.get(CONF_SIZE_ML, DEFAULT_SIZE_ML)
     )
@@ -35,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass=hass,
         entry=entry,
         address=address,
+        bottle_name=bottle_name,
         name=name,
         size_ml=size_ml,
     )

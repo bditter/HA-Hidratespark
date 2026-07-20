@@ -8,6 +8,7 @@ DOMAIN: Final = "ha_hidratespark"
 
 # Configuration keys
 CONF_ADDRESS: Final = "address"
+CONF_BOTTLE_NAME: Final = "bottle_name"
 CONF_SIZE_ML: Final = "size_ml"
 CONF_NAME_PREFIX: Final = "name_prefix"
 

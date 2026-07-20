@@ -19,7 +19,14 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .ble import BottleClient
-from .const import DOMAIN
+from .const import (
+    CONF_ADDRESS,
+    CONF_BOTTLE_NAME,
+    DEFAULT_NAME_PREFIX,
+    DOMAIN,
+    SERVICE_REF,
+)
+from .identity import normalize_bottle_name
 from .state import BottleState, Sip
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,12 +42,15 @@ class HidrateSparkCoordinator:
         hass: HomeAssistant,
         entry: ConfigEntry,
         address: str,
+        bottle_name: str,
         name: str,
         size_ml: int,
     ) -> None:
         self.hass = hass
         self.entry = entry
         self.address = address.upper()
+        self.bottle_name = bottle_name
+        self.bottle_id = normalize_bottle_name(bottle_name) or self.address
         self.name = name
         self.state = BottleState(hass, entry.entry_id, size_ml)
 
@@ -67,6 +77,7 @@ class HidrateSparkCoordinator:
 
     async def async_start(self) -> None:
         await self.state.async_load()
+        self._refresh_address_from_discovery()
 
         self._client = BottleClient(
             address=self.address,
@@ -85,7 +96,7 @@ class HidrateSparkCoordinator:
         self._unsub_advert = bluetooth.async_register_callback(
             self.hass,
             self._on_advertisement,
-            bluetooth.BluetoothCallbackMatcher(address=self.address),
+            bluetooth.BluetoothCallbackMatcher(connectable=True),
             bluetooth.BluetoothScanningMode.PASSIVE,
         )
 
@@ -118,6 +129,53 @@ class HidrateSparkCoordinator:
             self.hass, self.address, connectable=True
         )
 
+    def _refresh_address_from_discovery(self) -> None:
+        """Adopt the latest advertised MAC for this bottle name, if HA has one."""
+        for info in bluetooth.async_discovered_service_info(self.hass):
+            if self._advertisement_matches_bottle(info):
+                self._set_current_address(info.address)
+                return
+
+    def _advertisement_matches_bottle(
+        self, service_info: bluetooth.BluetoothServiceInfoBleak
+    ) -> bool:
+        """Return True when an advertisement belongs to this configured bottle."""
+        advertised_name = normalize_bottle_name(service_info.name)
+        if advertised_name != self.bottle_id:
+            return False
+        advertised_services = {u.lower() for u in service_info.service_uuids or []}
+        if SERVICE_REF.lower() in advertised_services:
+            return True
+        return bool(
+            service_info.name
+            and service_info.name.lower().startswith(DEFAULT_NAME_PREFIX)
+        )
+
+    def _set_current_address(self, address: str) -> bool:
+        """Update the mutable MAC address used for BLE connections."""
+        new_address = address.upper()
+        if new_address == self.address:
+            return False
+
+        old_address = self.address
+        self.address = new_address
+        if self._client is not None:
+            self._client.address = new_address
+
+        data = dict(self.entry.data)
+        data[CONF_ADDRESS] = new_address
+        data[CONF_BOTTLE_NAME] = self.bottle_name
+        self.hass.config_entries.async_update_entry(self.entry, data=data)
+        _LOGGER.info(
+            "bottle %s rotated MAC from %s to %s",
+            self.bottle_name,
+            old_address,
+            new_address,
+        )
+        if self._client is not None:
+            self._client.request_force_sync()
+        return True
+
     @callback
     def _on_advertisement(
         self,
@@ -126,7 +184,10 @@ class HidrateSparkCoordinator:
     ) -> None:
         # Just nudge the run loop — the BLE client picks up the latest device on
         # its next iteration. We don't drive connect/disconnect from here.
-        if self._client is not None and not self._connected:
+        if not self._advertisement_matches_bottle(service_info):
+            return
+        address_changed = self._set_current_address(service_info.address)
+        if self._client is not None and not self._connected and not address_changed:
             self._client.request_force_sync()
 
     # ---------------------------------------------------------- BLE callbacks

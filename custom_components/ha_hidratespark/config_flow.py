@@ -5,7 +5,7 @@ Discovery sources:
     advertising the HydroSync reference service or a `h2o*` local name, the
     user is offered a one-click "Configure" action.
   * Manual — the user picks from any HidrateSpark candidate currently
-    advertising in range, or types a MAC address directly.
+    advertising in range, or types its advertised name and current MAC address.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
+    CONF_BOTTLE_NAME,
     CONF_NAME_PREFIX,
     CONF_SIZE_ML,
     DEFAULT_NAME_PREFIX,
@@ -32,6 +33,7 @@ from .const import (
     DOMAIN,
     SERVICE_REF,
 )
+from .identity import normalize_bottle_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +44,11 @@ def _looks_like_bottle(info: BluetoothServiceInfoBleak) -> bool:
     if info.name and info.name.lower().startswith(DEFAULT_NAME_PREFIX):
         return True
     return False
+
+
+def _bottle_name(info: BluetoothServiceInfoBleak) -> str | None:
+    """Return the advertised bottle name when it can be used as identity."""
+    return info.name.strip() if info.name and info.name.strip() else None
 
 
 class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -59,13 +66,23 @@ class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
         self, discovery_info: BluetoothServiceInfoBleak
     ) -> FlowResult:
         """Handle a bottle discovered via the bluetooth integration."""
-        await self.async_set_unique_id(discovery_info.address)
-        self._abort_if_unique_id_configured()
         if not _looks_like_bottle(discovery_info):
             return self.async_abort(reason="not_supported")
+        bottle_name = _bottle_name(discovery_info)
+        bottle_id = normalize_bottle_name(bottle_name)
+        if bottle_name is None or bottle_id is None:
+            return self.async_abort(reason="not_supported")
+        await self.async_set_unique_id(bottle_id)
+        self._abort_if_unique_id_configured(
+            updates={
+                CONF_ADDRESS: discovery_info.address.upper(),
+                CONF_BOTTLE_NAME: bottle_name,
+            },
+            reload_on_update=True,
+        )
         self._discovery_info = discovery_info
         self.context["title_placeholders"] = {
-            "name": discovery_info.name or discovery_info.address,
+            "name": bottle_name,
         }
         return await self.async_step_bluetooth_confirm()
 
@@ -73,12 +90,14 @@ class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         assert self._discovery_info is not None
+        bottle_name = _bottle_name(self._discovery_info)
+        assert bottle_name is not None
         if user_input is not None:
             return self.async_create_entry(
-                title=self._discovery_info.name
-                or self._discovery_info.address,
+                title=bottle_name,
                 data={
-                    CONF_ADDRESS: self._discovery_info.address,
+                    CONF_ADDRESS: self._discovery_info.address.upper(),
+                    CONF_BOTTLE_NAME: bottle_name,
                     CONF_NAME_PREFIX: DEFAULT_NAME_PREFIX,
                 },
                 options={CONF_SIZE_ML: user_input.get(CONF_SIZE_ML, DEFAULT_SIZE_ML)},
@@ -86,7 +105,7 @@ class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="bluetooth_confirm",
             description_placeholders={
-                "name": self._discovery_info.name or self._discovery_info.address,
+                "name": bottle_name,
             },
             data_schema=vol.Schema(
                 {
@@ -104,37 +123,56 @@ class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Handle a manually-initiated flow."""
         if user_input is not None:
-            address = user_input[CONF_ADDRESS].upper()
-            await self.async_set_unique_id(address)
-            self._abort_if_unique_id_configured()
-            title = self._discovered.get(address)
+            bottle_name = str(user_input[CONF_BOTTLE_NAME]).strip()
+            bottle_id = normalize_bottle_name(bottle_name)
+            if bottle_id is None:
+                return self.async_abort(reason="not_supported")
+            discovered = self._discovered.get(bottle_id)
+            address = (
+                discovered.address
+                if discovered is not None
+                else user_input[CONF_ADDRESS]
+            ).upper()
+            await self.async_set_unique_id(bottle_id)
+            self._abort_if_unique_id_configured(
+                updates={
+                    CONF_ADDRESS: address,
+                    CONF_BOTTLE_NAME: bottle_name,
+                },
+                reload_on_update=True,
+            )
             return self.async_create_entry(
-                title=(title.name if title and title.name else address),
+                title=bottle_name,
                 data={
                     CONF_ADDRESS: address,
+                    CONF_BOTTLE_NAME: bottle_name,
                     CONF_NAME_PREFIX: DEFAULT_NAME_PREFIX,
                 },
                 options={CONF_SIZE_ML: user_input.get(CONF_SIZE_ML, DEFAULT_SIZE_ML)},
             )
 
         # Build a picker from currently-advertising candidates.
-        current_addresses = {
+        current_bottle_ids = {
             entry.unique_id for entry in self._async_current_entries()
         }
         for info in async_discovered_service_info(self.hass):
-            if info.address in current_addresses:
+            bottle_name = _bottle_name(info)
+            bottle_id = normalize_bottle_name(bottle_name)
+            if bottle_name is None or bottle_id is None:
+                continue
+            if bottle_id in current_bottle_ids:
                 continue
             if _looks_like_bottle(info):
-                self._discovered[info.address] = info
+                self._discovered[bottle_id] = info
 
         if self._discovered:
             choices = {
-                addr: f"{(info.name or addr)} ({addr})"
-                for addr, info in self._discovered.items()
+                bottle_id: f"{info.name} ({info.address})"
+                for bottle_id, info in self._discovered.items()
             }
             schema = vol.Schema(
                 {
-                    vol.Required(CONF_ADDRESS): vol.In(choices),
+                    vol.Required(CONF_BOTTLE_NAME): vol.In(choices),
                     vol.Required(CONF_SIZE_ML, default=DEFAULT_SIZE_ML): vol.All(
                         cv.positive_int, vol.Range(min=100, max=2000)
                     ),
@@ -143,6 +181,7 @@ class HidrateSparkConfigFlow(ConfigFlow, domain=DOMAIN):
         else:
             schema = vol.Schema(
                 {
+                    vol.Required(CONF_BOTTLE_NAME): str,
                     vol.Required(CONF_ADDRESS): str,
                     vol.Required(CONF_SIZE_ML, default=DEFAULT_SIZE_ML): vol.All(
                         cv.positive_int, vol.Range(min=100, max=2000)

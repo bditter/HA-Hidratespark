@@ -1,4 +1,4 @@
-# Copilot instructions — HA-HidrateSpark-Bluetooth-Proxy
+# Copilot instructions — HA Hidratespark
 
 > Canonical standards live in the `dev-standards` repo on SOUNDWAVE/Gitea.
 > Read by Copilot chat **and** inline suggestions. For full HA build conventions,
@@ -7,12 +7,12 @@
 ## What this repo is
 
 A **Home Assistant custom component** — a Bluetooth (BLE) proxy/integration for
-HidrateSpark smart water bottles. Domain: `hidratespark_bluetooth_proxy`.
+HidrateSpark smart water bottles. Domain: `ha_hidratespark`.
 Coordinator-based, exposes sensor + binary_sensor entities.
 
 ## Repo shape
 
-- `custom_components/hidratespark_bluetooth_proxy/` — `manifest.json`,
+- `custom_components/ha_hidratespark/` — `manifest.json`,
   `__init__.py`, `config_flow.py`, `const.py`, `coordinator.py`, `entity.py`,
   `ble.py`, `state.py`, `sensor.py`, `binary_sensor.py`, `strings.json`,
   `translations/`, `brand/icon.png`.

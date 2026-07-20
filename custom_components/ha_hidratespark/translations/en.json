@@ -4,9 +4,10 @@
     "step": {
       "user": {
         "title": "Set up HA Hidratespark",
-        "description": "Choose a HidrateSpark bottle that's currently advertising, or enter its Bluetooth address manually. The bottle must be paired with the official app at least once before this will work.",
+        "description": "Choose a HidrateSpark bottle that's currently advertising, or enter its advertised name and current Bluetooth address manually. The bottle must be paired with the official app at least once before this will work.",
         "data": {
-          "address": "Bottle",
+          "bottle_name": "Bottle",
+          "address": "Current Bluetooth address",
           "size_ml": "Bottle capacity (mL)"
         }
       },
@@ -20,7 +21,7 @@
     },
     "abort": {
       "already_configured": "This bottle is already configured.",
-      "not_supported": "This Bluetooth device does not look like a HidrateSpark bottle."
+      "not_supported": "This Bluetooth device does not look like a HidrateSpark bottle or is missing an advertised name."
     }
   },
   "options": {

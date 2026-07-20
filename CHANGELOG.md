@@ -1,5 +1,14 @@
 # Changelog
 
+## What's new in v1.1.0
+
+### Fixed
+- Use the bottle's advertised name as the stable integration identity, and treat
+  the Bluetooth MAC address as a mutable connection detail. When Home Assistant
+  sees the same bottle name advertising with a new MAC, the integration updates
+  the stored address and reconnects without requiring the bottle to be deleted
+  and re-added.
+
 ## What's new in v0.2.0
 Legacy-firmware (e.g. 32oz) bottles now report weight/fill, plus several sip-accuracy
 and resilience fixes. Big thanks to **[Huw Davies (@hadavies)](https://github.com/hadavies)**,
