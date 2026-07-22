@@ -239,10 +239,16 @@ class HidrateSparkCoordinator:
     # ---------------------------------------------------------- BLE callbacks
 
     async def _handle_sip(
-        self, timestamp: float, volume_ml: int, _total_reported_ml: int
+        self, timestamp: float, volume_ml: int, total_reported_ml: int
     ) -> None:
         self._mark_data_update()
-        if self.state.add_sip(Sip(timestamp=timestamp, volume_ml=volume_ml)):
+        if self.state.add_sip(
+            Sip(
+                timestamp=timestamp,
+                volume_ml=volume_ml,
+                reported_total_ml=total_reported_ml,
+            )
+        ):
             await self.state.async_save()
         self._notify()
 

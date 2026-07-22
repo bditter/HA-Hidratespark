@@ -113,7 +113,7 @@ class WeightCalibrationTest(unittest.TestCase):
         b.calibrate_full()
         b.update_fill_from_weight(33500)
         b.calibrate_empty()
-        b.add_sip(Sip(timestamp=0, volume_ml=100))
+        b.add_sip(Sip(timestamp=0, volume_ml=100, reported_total_ml=100))
         b.update_fill_from_weight(34656)
 
         b.reset_totals()
@@ -123,6 +123,7 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertEqual(b.sips_today, 0)
         self.assertEqual(b.refills_today, 0)
         self.assertIsNone(b.last_sip)
+        self.assertIsNone(b.last_reported_total_ml)
         self.assertEqual(b.current_fill_ml, 887)
         self.assertEqual(b.weight_full_raw, 34656)
         self.assertEqual(b.weight_empty_raw, 33500)

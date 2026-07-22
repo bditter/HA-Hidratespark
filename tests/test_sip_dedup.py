@@ -54,6 +54,61 @@ class DedupPersistenceTest(unittest.TestCase):
         )
         self.assertEqual(b2.lifetime_total_ml, 220)
 
+    def test_reported_total_delta_corrects_percent_volume(self):
+        b = new_bottle(887)
+
+        self.assertTrue(
+            b.add_sip(
+                Sip(
+                    timestamp=local_ts(2026, 6, 18, 11, 0),
+                    volume_ml=89,
+                    reported_total_ml=91,
+                )
+            )
+        )
+        self.assertTrue(
+            b.add_sip(
+                Sip(
+                    timestamp=local_ts(2026, 6, 18, 11, 15),
+                    volume_ml=89,
+                    reported_total_ml=181,
+                )
+            )
+        )
+
+        self.assertEqual(b.total_today_ml, 181)
+        self.assertEqual(b.sips[0].volume_ml, 91)
+        self.assertEqual(b.last_sip.volume_ml, 90)
+
+    def test_reported_total_replay_is_deduped_after_restart(self):
+        b1 = new_bottle(887)
+        b1.add_sip(
+            Sip(
+                timestamp=local_ts(2026, 6, 18, 11, 0),
+                volume_ml=89,
+                reported_total_ml=89,
+            )
+        )
+        b1.add_sip(
+            Sip(
+                timestamp=local_ts(2026, 6, 18, 11, 15),
+                volume_ml=92,
+                reported_total_ml=181,
+            )
+        )
+
+        b2 = _restart(b1)
+        accepted = b2.add_sip(
+            Sip(
+                timestamp=local_ts(2026, 6, 18, 11, 15),
+                volume_ml=89,
+                reported_total_ml=181,
+            )
+        )
+
+        self.assertFalse(accepted)
+        self.assertEqual(b2.total_today_ml, 181)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,5 +1,13 @@
 # Changelog
 
+## What's new in v1.2.4
+
+### Fixed
+- Sip totals now use the bottle's cumulative reported mL delta when available,
+  reducing undercount caused by integer percent-based sip volume frames.
+- Volume sensors now suggest two decimal places in Home Assistant so fill values
+  like 887 mL display as 29.99 fl oz instead of rounding to 30.0 fl oz.
+
 ## What's new in v1.2.3
 
 ### Added
