@@ -213,11 +213,14 @@ class WeightCalibrationTest(unittest.TestCase):
         b.calibrate_full()
         b.update_fill_from_weight(33576)
         b.calibrate_empty()
+        self.assertTrue(b.refill_detector_armed)
         b.update_fill_from_weight(35066)
         b.reset_totals()
 
         b.update_fill_from_weight(33576)
+        self.assertTrue(b.refill_detector_armed)
         b.update_fill_from_weight(34984)
+        self.assertFalse(b.refill_detector_armed)
         b.update_fill_from_weight(33576)
         b.update_fill_from_weight(34984)
 

@@ -49,10 +49,14 @@
       "serial_number": { "name": "Serial number" },
       "sips_today": { "name": "Sips today" },
       "refills_today": { "name": "Refills today" },
-      "weight_raw": { "name": "Bottle weight (raw)" }
+      "weight_raw": { "name": "Bottle weight (raw)" },
+      "weight_empty_raw": { "name": "Empty weight anchor (raw)" },
+      "weight_full_raw": { "name": "Full weight anchor (raw)" },
+      "raw_units_per_ml": { "name": "Weight scale" }
     },
     "binary_sensor": {
-      "connected": { "name": "Connected" }
+      "connected": { "name": "Connected" },
+      "refill_detector_armed": { "name": "Refill detector armed" }
     },
     "button": {
       "calibrate_full": { "name": "Calibrate full" },

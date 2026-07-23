@@ -473,6 +473,11 @@ class BottleState:
         return self._refills_today
 
     @property
+    def refill_detector_armed(self) -> bool:
+        """Return whether the next near-full weight rise can count as a refill."""
+        return self._weight_refill_ready
+
+    @property
     def current_fill_pct(self) -> int:
         if self.bottle_size_ml <= 0:
             return 0

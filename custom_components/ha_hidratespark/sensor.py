@@ -116,6 +116,29 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
+    SensorEntityDescription(
+        key="weight_empty_raw",
+        translation_key="weight_empty_raw",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="weight_full_raw",
+        translation_key="weight_full_raw",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="raw_units_per_ml",
+        translation_key="raw_units_per_ml",
+        native_unit_of_measurement="raw/mL",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=3,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
 )
 
 
@@ -179,6 +202,12 @@ class HidrateSparkSensor(HidrateSparkEntity, SensorEntity):
             return state.refills_today
         if key == "weight_raw":
             return state.weight_raw
+        if key == "weight_empty_raw":
+            return state.weight_empty_raw
+        if key == "weight_full_raw":
+            return state.weight_full_raw
+        if key == "raw_units_per_ml":
+            return round(state.raw_units_per_ml, 3)
         return None
 
     @property
@@ -193,6 +222,8 @@ class HidrateSparkSensor(HidrateSparkEntity, SensorEntity):
             "last_reported_total_raw",
         ):
             return self._coordinator.connected
+        if self.entity_description.key in ("weight_empty_raw", "weight_full_raw"):
+            return self.native_value is not None
         return True
 
 

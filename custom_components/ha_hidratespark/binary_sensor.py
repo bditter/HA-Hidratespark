@@ -24,6 +24,13 @@ BINARY_SENSORS: tuple[BinarySensorEntityDescription, ...] = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    BinarySensorEntityDescription(
+        key="refill_detector_armed",
+        translation_key="refill_detector_armed",
+        icon="mdi:water-sync",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
 )
 
 
@@ -53,6 +60,8 @@ class HidrateSparkBinarySensor(HidrateSparkEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
+        if self.entity_description.key == "refill_detector_armed":
+            return self._coordinator.state.refill_detector_armed
         return self._coordinator.connected
 
     @property

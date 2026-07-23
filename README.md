@@ -1,7 +1,7 @@
 # HA Hidratespark — Home Assistant integration
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](https://github.com/hacs/integration)
-[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases/tag/v1.2.5)
+[![Version](https://img.shields.io/github/v/tag/bditter/HA-Hidratespark?label=version&style=flat-square)](https://github.com/bditter/HA-Hidratespark/releases)
 [![License](https://img.shields.io/github/license/bditter/HA-Hidratespark?style=flat-square)](LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/commits)
 [![Stars](https://img.shields.io/github/stars/bditter/HA-Hidratespark?style=flat-square)](https://github.com/bditter/HA-Hidratespark/stargazers)
@@ -104,8 +104,14 @@ the app disconnects. Recommended setups:
 | Last sip time | sensor (timestamp) |
 | Last update time | sensor (timestamp) |
 | Serial number | sensor |
+| Sips today | sensor (`total_increasing`) |
+| Refills today | sensor (`total_increasing`) |
 | Bottle weight (raw) | diagnostic, disabled by default |
+| Empty weight anchor (raw) | diagnostic, disabled by default |
+| Full weight anchor (raw) | diagnostic, disabled by default |
+| Weight scale | diagnostic, disabled by default |
 | Connected | binary_sensor (connectivity) |
+| Refill detector armed | diagnostic binary_sensor, disabled by default |
 | Calibrate full | button |
 | Calibrate empty | button |
 | Reset totals | button |

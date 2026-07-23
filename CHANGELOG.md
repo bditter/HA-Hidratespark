@@ -1,5 +1,11 @@
 # Changelog
 
+## What's new in v1.2.6-beta.6
+
+### Added
+- Added disabled-by-default diagnostics for calibrated empty raw weight, full
+  raw weight, active raw-units-per-mL scale, and refill detector armed state.
+
 ## What's new in v1.2.6-beta.5
 
 ### Fixed
