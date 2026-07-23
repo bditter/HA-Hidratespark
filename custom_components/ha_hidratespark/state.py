@@ -28,7 +28,6 @@ from .const import (
     STORAGE_VERSION,
     WEIGHT_REFILL_FULL_PCT,
     WEIGHT_REFILL_LOW_PCT,
-    WEIGHT_REFILL_MIN_INCREASE_ML,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -90,6 +89,7 @@ class BottleState:
         self.weight_full_calibrated: bool = False
         self.weight_empty_calibrated: bool = False
         self.weight_raw: Optional[int] = None  # most recent stable u16 reading
+        self._weight_refill_ready = True
 
     # ----------------------------------------------------------- persistence
 
@@ -218,6 +218,7 @@ class BottleState:
         self.weight_full_raw = self.weight_raw
         self.weight_full_calibrated = True
         self.current_fill_ml = self.bottle_size_ml
+        self._weight_refill_ready = False
         _LOGGER.info("weight calibration: full anchor set to %s", self.weight_raw)
         return True
 
@@ -228,12 +229,15 @@ class BottleState:
         self.weight_empty_raw = self.weight_raw
         self.weight_empty_calibrated = True
         self.current_fill_ml = 0
+        self._weight_refill_ready = True
         _LOGGER.info("weight calibration: empty anchor set to %s", self.weight_raw)
         return True
 
     def reset_totals(self) -> None:
         """Clear accumulated totals without touching calibration or fill state."""
         self._maybe_rollover()
+        if self.has_explicit_weight_calibration and self.weight_raw is not None:
+            self.current_fill_ml = self._fill_from_explicit_weight(self.weight_raw)
         self.lifetime_total_ml = 0
         self.last_seen = None
         self.last_sip = None
@@ -273,32 +277,29 @@ class BottleState:
         if not self.has_explicit_weight_calibration:
             return
 
-        increase_ml = new_fill_ml - previous_fill_ml
-        min_increase_ml = max(
-            WEIGHT_REFILL_MIN_INCREASE_ML,
-            round(self.bottle_size_ml * 0.20),
-        )
-        if increase_ml < min_increase_ml:
+        if new_fill_ml <= previous_fill_ml:
             return
 
         previous_pct = round(100 * previous_fill_ml / self.bottle_size_ml)
         new_pct = round(100 * new_fill_ml / self.bottle_size_ml)
+        if previous_pct <= WEIGHT_REFILL_LOW_PCT or new_pct <= WEIGHT_REFILL_LOW_PCT:
+            self._weight_refill_ready = True
         returned_near_full = (
-            previous_pct <= WEIGHT_REFILL_LOW_PCT
+            self._weight_refill_ready
             and new_pct >= WEIGHT_REFILL_FULL_PCT
         )
-        large_refill = increase_ml >= min_increase_ml
-        if not (returned_near_full or large_refill):
+        if not returned_near_full:
             return
 
         self._maybe_rollover()
         self._refills_today += 1
+        self._weight_refill_ready = False
         self.last_refill_ts = time.time()
         _LOGGER.info(
             "REFILL (weight): %dml -> %dml (+%dml), refills_today=%d",
             previous_fill_ml,
             new_fill_ml,
-            increase_ml,
+            new_fill_ml - previous_fill_ml,
             self._refills_today,
         )
 
@@ -342,9 +343,7 @@ class BottleState:
             self.weight_empty_raw is not None
             and self.weight_full_raw - self.weight_empty_raw >= 0.6 * full_span
         ):
-            # Enough range observed: measure up from the learned empty floor, so
-            # empty reads 0 regardless of how full the last fill actually was.
-            new_fill = round((raw - self.weight_empty_raw) / raw_units_per_ml)
+            new_fill = self._fill_from_weight(raw, raw_units_per_ml)
         else:
             # Not drained enough yet to trust the floor: estimate down from full.
             new_fill = self.bottle_size_ml - round(
@@ -367,6 +366,17 @@ class BottleState:
             self.current_fill_ml = new_fill
             return True
         return False
+
+    def _fill_from_explicit_weight(self, raw: int) -> int:
+        """Return fill mL from an explicitly calibrated full/empty span."""
+        return self._fill_from_weight(raw, self.raw_units_per_ml)
+
+    def _fill_from_weight(self, raw: int, raw_units_per_ml: float) -> int:
+        """Return fill mL measured up from the current empty raw anchor."""
+        if self.weight_empty_raw is None:
+            return self.current_fill_ml
+        fill_ml = round((raw - self.weight_empty_raw) / raw_units_per_ml)
+        return max(0, min(self.bottle_size_ml, fill_ml))
 
     def _add_weight_consumption(self, volume_ml: int) -> None:
         """Count consumed water from a calibrated downward fill change."""

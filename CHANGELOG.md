@@ -1,5 +1,13 @@
 # Changelog
 
+## What's new in v1.2.6-beta.3
+
+### Fixed
+- Reset totals now re-baselines current fill from the latest calibrated raw
+  weight, preventing an immediate partial fill from being counted as consumed.
+- Weight-based refill counting now requires a low-to-near-full transition, so a
+  fill that climbs in multiple stable weight steps counts as one refill.
+
 ## What's new in v1.2.6-beta.2
 
 ### Changed

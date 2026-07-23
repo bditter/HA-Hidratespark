@@ -161,6 +161,39 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertLess(b.current_fill_ml, 887)
         self.assertEqual(b.current_fill_pct, 99)
 
+    def test_reset_rebaselines_fill_from_latest_raw_weight(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.update_fill_from_weight(35066)
+        b.update_fill_from_weight(33576)
+
+        b.reset_totals()
+        self.assertEqual(b.current_fill_ml, 0)
+
+        b.update_fill_from_weight(34984)
+
+        self.assertEqual(b.current_fill_pct, 94)
+        self.assertEqual(b.total_today_ml, 0)
+        self.assertEqual(b.lifetime_total_ml, 0)
+
+    def test_weight_refill_counts_once_while_fill_is_climbing(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.reset_totals()
+
+        b.update_fill_from_weight(34300)
+        b.update_fill_from_weight(34984)
+        b.update_fill_from_weight(35066)
+
+        self.assertEqual(b.refills_today, 1)
+        self.assertEqual(b.total_today_ml, 0)
+
     def test_reset_totals_keeps_fill_and_calibration(self):
         b = new_bottle(887)
         b.update_fill_from_weight(34656)

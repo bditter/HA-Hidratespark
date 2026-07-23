@@ -75,7 +75,6 @@ RAW_UNITS_PER_ML: Final = 1.305
 REFILL_MIN_DELTA_RAW: Final = 60
 WEIGHT_REFILL_LOW_PCT: Final = 80
 WEIGHT_REFILL_FULL_PCT: Final = 95
-WEIGHT_REFILL_MIN_INCREASE_ML: Final = 150
 FILL_UPDATE_DEADBAND_ML: Final = 5
 
 # 13-step handshake from HydroSync. Each tuple is (target_char, hex_payload).
