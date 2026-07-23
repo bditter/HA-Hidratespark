@@ -1,5 +1,12 @@
 # Changelog
 
+## What's new in v1.2.6-beta.5
+
+### Fixed
+- Refill counting now re-arms as soon as calibrated weight falls to the low
+  threshold and counts a refill when the mug returns to the fill line, avoiding
+  missed refills after empty-to-fill-line cycles.
+
 ## What's new in v1.2.6-beta.4
 
 ### Fixed

@@ -207,6 +207,23 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertEqual(b.refills_today, 1)
         self.assertEqual(b.total_today_ml, 0)
 
+    def test_empty_to_fill_line_counts_each_refill_cycle(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.update_fill_from_weight(35066)
+        b.reset_totals()
+
+        b.update_fill_from_weight(33576)
+        b.update_fill_from_weight(34984)
+        b.update_fill_from_weight(33576)
+        b.update_fill_from_weight(34984)
+
+        self.assertEqual(b.refills_today, 2)
+        self.assertGreater(b.total_today_ml, 1700)
+
     def test_reset_totals_keeps_fill_and_calibration(self):
         b = new_bottle(887)
         b.update_fill_from_weight(34656)

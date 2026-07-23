@@ -74,7 +74,7 @@ RAW_UNITS_PER_ML: Final = 1.305
 # refilled (~30 mL at the scale above) rather than just opened to drink.
 REFILL_MIN_DELTA_RAW: Final = 60
 WEIGHT_REFILL_LOW_PCT: Final = 80
-WEIGHT_REFILL_FULL_PCT: Final = 95
+WEIGHT_REFILL_FULL_PCT: Final = 90
 FILL_UPDATE_DEADBAND_ML: Final = 5
 FILL_EMPTY_SNAP_ML: Final = 5
 

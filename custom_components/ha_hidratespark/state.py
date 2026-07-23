@@ -278,11 +278,14 @@ class BottleState:
         if not self.has_explicit_weight_calibration:
             return
 
+        previous_pct = round(100 * previous_fill_ml / self.bottle_size_ml)
+        new_pct = round(100 * new_fill_ml / self.bottle_size_ml)
+        if new_pct <= WEIGHT_REFILL_LOW_PCT:
+            self._weight_refill_ready = True
+
         if new_fill_ml <= previous_fill_ml:
             return
 
-        previous_pct = round(100 * previous_fill_ml / self.bottle_size_ml)
-        new_pct = round(100 * new_fill_ml / self.bottle_size_ml)
         if previous_pct <= WEIGHT_REFILL_LOW_PCT or new_pct <= WEIGHT_REFILL_LOW_PCT:
             self._weight_refill_ready = True
         returned_near_full = (
@@ -359,6 +362,7 @@ class BottleState:
         if self.has_explicit_weight_calibration:
             if new_fill < previous_fill_ml:
                 self._add_weight_consumption(previous_fill_ml - new_fill)
+                self._maybe_count_weight_refill(previous_fill_ml, new_fill)
             elif new_fill > previous_fill_ml:
                 self._maybe_count_weight_refill(previous_fill_ml, new_fill)
         else:
