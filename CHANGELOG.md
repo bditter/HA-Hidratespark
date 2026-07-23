@@ -1,5 +1,14 @@
 # Changelog
 
+## What's new in v1.2.6-beta.2
+
+### Changed
+- When explicit full/empty calibration exists, water totals are now counted from
+  calibrated weight drops instead of raw sip-percent volume.
+- Partial fills now continue to use their raw position in the calibrated
+  full/empty span, so near-full readings can show 99% instead of snapping to
+  100%.
+
 ## What's new in v1.2.6-beta.1
 
 ### Added

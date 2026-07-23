@@ -2,7 +2,7 @@
 
 import unittest
 
-from ha_stub import HomeAssistant, load_state
+from ha_stub import HomeAssistant, load_state, local_ts
 
 state = load_state()
 Sip = state.Sip
@@ -120,6 +120,46 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertEqual(b.current_fill_ml, fill)
         self.assertTrue(b.update_fill_from_weight(33576 + 110))
         self.assertGreater(b.current_fill_ml, fill)
+
+    def test_calibrated_weight_drop_counts_consumption_instead_of_sip_volume(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.update_fill_from_weight(35066)
+        b.reset_totals()
+
+        b.add_sip(
+            Sip(
+                timestamp=local_ts(2026, 6, 18, 12, 0),
+                volume_ml=62,
+                reported_total_ml=100,
+            )
+        )
+        self.assertEqual(b.total_today_ml, 0)
+        self.assertEqual(b.lifetime_total_ml, 0)
+        self.assertEqual(b.sips_today, 1)
+
+        b.update_fill_from_weight(33576)
+
+        self.assertEqual(b.current_fill_ml, 0)
+        self.assertEqual(b.total_today_ml, 887)
+        self.assertEqual(b.lifetime_total_ml, 887)
+
+    def test_partial_fill_uses_raw_position_without_snapping_full(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.update_fill_from_weight(35066)
+        b.reset_totals()
+
+        b.update_fill_from_weight(35051)
+
+        self.assertLess(b.current_fill_ml, 887)
+        self.assertEqual(b.current_fill_pct, 99)
 
     def test_reset_totals_keeps_fill_and_calibration(self):
         b = new_bottle(887)

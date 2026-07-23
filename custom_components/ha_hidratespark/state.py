@@ -351,16 +351,31 @@ class BottleState:
                 (self.weight_full_raw - raw) / raw_units_per_ml
             )
         new_fill = max(0, min(self.bottle_size_ml, new_fill))
-        self._maybe_count_weight_refill(previous_fill_ml, new_fill)
         if (
             new_fill not in (0, self.bottle_size_ml)
             and abs(new_fill - self.current_fill_ml) < FILL_UPDATE_DEADBAND_ML
         ):
             return False
+        if self.has_explicit_weight_calibration:
+            if new_fill < previous_fill_ml:
+                self._add_weight_consumption(previous_fill_ml - new_fill)
+            elif new_fill > previous_fill_ml:
+                self._maybe_count_weight_refill(previous_fill_ml, new_fill)
+        else:
+            self._maybe_count_weight_refill(previous_fill_ml, new_fill)
         if new_fill != self.current_fill_ml:
             self.current_fill_ml = new_fill
             return True
         return False
+
+    def _add_weight_consumption(self, volume_ml: int) -> None:
+        """Count consumed water from a calibrated downward fill change."""
+        if volume_ml <= 0:
+            return
+        self._maybe_rollover()
+        self.lifetime_total_ml += volume_ml
+        self._total_today_ml += volume_ml
+        _LOGGER.debug("weight consumption: +%dml", volume_ml)
 
     def add_sip(self, sip: Sip) -> bool:
         """Append a sip if it isn't a duplicate. Returns True if accepted."""
@@ -386,12 +401,16 @@ class BottleState:
         self._maybe_rollover()
 
         self.sips.append(sip)
-        self.lifetime_total_ml += sip.volume_ml
+        use_sip_volume_for_totals = not self.has_explicit_weight_calibration
+        if use_sip_volume_for_totals:
+            self.lifetime_total_ml += sip.volume_ml
 
         # Only count toward 'today' if the sip actually falls on today's local
-        # date. Historical/replayed sips still contribute to the lifetime total.
+        # date. Historical/replayed sips still contribute to the lifetime total
+        # when sip volume is the active totals source.
         if self._local_date_str(sip.timestamp) == self._today_date:
-            self._total_today_ml += sip.volume_ml
+            if use_sip_volume_for_totals:
+                self._total_today_ml += sip.volume_ml
             self._sips_today += 1
 
         # 'Last sip' / 'last seen' advance forward only, so a replayed old frame
