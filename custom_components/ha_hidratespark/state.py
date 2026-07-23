@@ -21,6 +21,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     RAW_UNITS_PER_ML,
+    FILL_EMPTY_SNAP_ML,
     FILL_UPDATE_DEADBAND_ML,
     SIP_DEDUP_TIMESTAMP_TOLERANCE_S,
     SIP_DEDUP_WINDOW,
@@ -376,6 +377,8 @@ class BottleState:
         if self.weight_empty_raw is None:
             return self.current_fill_ml
         fill_ml = round((raw - self.weight_empty_raw) / raw_units_per_ml)
+        if fill_ml <= FILL_EMPTY_SNAP_ML:
+            return 0
         return max(0, min(self.bottle_size_ml, fill_ml))
 
     def _add_weight_consumption(self, volume_ml: int) -> None:

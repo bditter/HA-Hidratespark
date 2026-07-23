@@ -161,6 +161,19 @@ class WeightCalibrationTest(unittest.TestCase):
         self.assertLess(b.current_fill_ml, 887)
         self.assertEqual(b.current_fill_pct, 99)
 
+    def test_near_empty_raw_snaps_to_zero(self):
+        b = new_bottle(887)
+        b.update_fill_from_weight(35066)
+        b.calibrate_full()
+        b.update_fill_from_weight(33576)
+        b.calibrate_empty()
+        b.update_fill_from_weight(35066)
+
+        b.update_fill_from_weight(33579)
+
+        self.assertEqual(b.current_fill_ml, 0)
+        self.assertEqual(b.current_fill_pct, 0)
+
     def test_reset_rebaselines_fill_from_latest_raw_weight(self):
         b = new_bottle(887)
         b.update_fill_from_weight(35066)

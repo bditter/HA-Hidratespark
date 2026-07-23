@@ -76,6 +76,7 @@ REFILL_MIN_DELTA_RAW: Final = 60
 WEIGHT_REFILL_LOW_PCT: Final = 80
 WEIGHT_REFILL_FULL_PCT: Final = 95
 FILL_UPDATE_DEADBAND_ML: Final = 5
+FILL_EMPTY_SNAP_ML: Final = 5
 
 # 13-step handshake from HydroSync. Each tuple is (target_char, hex_payload).
 # Writes are 50 ms apart.

@@ -1,5 +1,11 @@
 # Changelog
 
+## What's new in v1.2.6-beta.4
+
+### Fixed
+- Current fill now snaps to zero when a calibrated raw weight is within 5 mL of
+  the empty anchor, preventing tiny near-empty residuals like 0.07 fl oz.
+
 ## What's new in v1.2.6-beta.3
 
 ### Fixed
